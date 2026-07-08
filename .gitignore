@@ -1,0 +1,9 @@
+# Bloquer l'environnement virtuel et les secrets du backend
+resume_ai_api/venv/
+resume_ai_api/.env
+resume_ai_api/__pycache__/
+resume_ai_api/*.db
+
+# Fichiers système
+.vscode/
+.DS_Store
