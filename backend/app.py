@@ -2,7 +2,6 @@ import os
 from flask import Flask
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
-
 from flask_cors import CORS
 
 # On importe les modules de sécurité et la base de données depuis le dossier auth/ de Damon
@@ -10,12 +9,11 @@ from auth.models import db
 from auth.routes import auth_bp
 from auth.limiter import limiter
 from auth.blacklist import is_token_blacklisted
-=======
+
 load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-
     CORS(app)
 
     # Configuration de l'application (Orthographe corrigée !)
@@ -53,17 +51,6 @@ def create_app():
             "status": "success", 
             "message": "Félicitations Rajo, l'architecture clonée et sécurisée fonctionne !"
         }
-=======
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-
-    jwt = JWTManager(app)
-
-    @app.route('/')
-    def test_serveur():
-        return {"statut": "En ligne", "message": "Serveur central prêt !"}
-
 
     return app
 
