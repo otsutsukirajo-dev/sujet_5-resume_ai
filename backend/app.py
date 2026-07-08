@@ -1,24 +1,24 @@
-from flask import Flask
-from flask_jwt_extended import JWTManager
-from dotenv import load_dotenv
 import os
-
-from auth.models import db
-from auth.routes import auth_bp
+from flask import Flask
+from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager
 
 load_dotenv()
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "change-moi-en-production")
+def create_app():
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
-db.init_app(app)
-jwt = JWTManager(app)
+    jwt = JWTManager(app)
 
-app.register_blueprint(auth_bp)
+    @app.route('/')
+    def test_serveur():
+        return {"statut": "En ligne", "message": "Serveur central prêt !"}
 
-with app.app_context():
-    db.create_all()
+    return app
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True, port=5000)
