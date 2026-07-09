@@ -11,9 +11,9 @@ from auth.routes import auth_bp
 from auth.blacklist import is_token_blacklisted
 from auth.limiter import limiter
 
-# --- Import des autres modules (Laissés en commentaires pour Mandresy et Mihajasoa) ---
-# from database.models import Document, Resume   # Mandresy
-# from summarizer.routes import summarizer_bp     # Mihajasoa
+# --- Import des autres modules branchés ---
+# from database.models import Document, Resume   # Laissé pour Mandresy
+from summarizer.routes import summarizer_bp     # Activé pour Mihajasoa
 
 load_dotenv()
 
@@ -38,8 +38,8 @@ def check_if_token_revoked(jwt_header, jwt_payload):
     return is_token_blacklisted(jti)
 
 # --- Enregistrement des blueprints conforme au fichier INTEGRATION.md ---
-app.register_blueprint(auth_bp)  # Pas de url_prefix ici, Meddy l'a déjà géré en interne
-# app.register_blueprint(summarizer_bp)   # À activer pour Mihajasoa plus tard
+app.register_blueprint(auth_bp)
+app.register_blueprint(summarizer_bp)  # Enregistré avec succès !
 
 # --- Création des tables ---
 with app.app_context():
@@ -48,7 +48,10 @@ with app.app_context():
 # Route racine pour tester facilement sur ton navigateur
 @app.route('/')
 def index():
-    return {"status": "success", "message": "L'API de Rajo répond parfaitement ! Les routes de Meddy sont prêtes."}
+    return {
+        "status": "success", 
+        "message": "L'API centrale de Rajo tourne parfaitement ! Auth et Summarizer sont synchronisés."
+    }
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

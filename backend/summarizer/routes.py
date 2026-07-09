@@ -1,7 +1,7 @@
 """
 routes.py
 Blueprint Flask pour le module résumé : /api/summarize et /api/history
-Auteur: Mihajasoa
+Auteur: Mihajasoa (Corrigé par Rajo pour l'intégration)
 """
 
 import logging
@@ -12,7 +12,7 @@ from datetime import datetime
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from .extractor import ExtractionError, allowed_file, extract_text
+from .extraction import ExtractionError, allowed_file, extract_text
 from .summarizer import SummarizationError, summarize_text
 
 logger = logging.getLogger(__name__)
@@ -32,18 +32,9 @@ def summarize():
     """
     Reçoit soit un fichier (multipart/form-data, champ 'file'),
     soit du texte brut (JSON: {"text": "..."}), et renvoie un résumé.
-
-    Réponse JSON:
-        {
-          "document_id": int,
-          "resume_id": int,
-          "summary": str,
-          "original_length": int,
-          "summary_length": int
-        }
     """
-    # Import local pour éviter les imports circulaires avec database/app
-    from database.db import db
+    # Import corrigé par Rajo pour respecter la règle de Meddy (Un seul db central)
+    from auth.models import db
     from database.models import Document, Resume
 
     user_id = get_jwt_identity()
@@ -58,8 +49,7 @@ def summarize():
             return jsonify({"error": "Aucun fichier sélectionné."}), 400
         if not allowed_file(file.filename):
             return jsonify({
-                "error": "Format de fichier non supporté. "
-                         "Formats acceptés : .pdf, .docx, .txt"
+                "error": "Format de fichier non supporté. Formats acceptés : .pdf, .docx, .txt"
             }), 400
 
         _ensure_upload_folder()
@@ -72,7 +62,6 @@ def summarize():
         except ExtractionError as e:
             return jsonify({"error": str(e)}), 422
         finally:
-            # Nettoyage du fichier temporaire après extraction
             if os.path.exists(filepath):
                 os.remove(filepath)
 
@@ -81,8 +70,7 @@ def summarize():
         filename = "texte_saisi_manuellement.txt"
     else:
         return jsonify({
-            "error": "Fournissez soit un fichier ('file'), soit un champ "
-                     "JSON 'text'."
+            "error": "Fournissez soit un fichier ('file'), soit un champ JSON 'text'."
         }), 400
 
     if not source_text or not source_text.strip():
@@ -90,9 +78,9 @@ def summarize():
 
     # --- Paramètres optionnels de résumé ---
     max_length = request.form.get("max_length", type=int) or \
-        (request.json.get("max_length") if request.is_json else None) or 150
+                 (request.json.get("max_length") if request.is_json else None) or 150
     min_length = request.form.get("min_length", type=int) or \
-        (request.json.get("min_length") if request.is_json else None) or 40
+                 (request.json.get("min_length") if request.is_json else None) or 40
 
     # --- Génération du résumé ---
     try:
@@ -110,7 +98,7 @@ def summarize():
             created_at=datetime.utcnow(),
         )
         db.session.add(document)
-        db.session.flush()  # récupère document.id avant le commit final
+        db.session.flush()  # Récupère document.id avant le commit final
 
         resume = Resume(
             document_id=document.id,
@@ -138,7 +126,6 @@ def summarize():
 def history():
     """
     Renvoie l'historique des résumés de l'utilisateur connecté.
-    Query params optionnels : ?page=1&per_page=10
     """
     from database.models import Document, Resume
 
