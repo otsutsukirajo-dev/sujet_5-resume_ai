@@ -1,42 +1,52 @@
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from auth.blacklist import is_token_blacklisted
-from flask import Flask
-from flask_jwt_extended import JWTManager
-from dotenv import load_dotenv
-from datetime import timedelta
 import os
-from auth.models import db
+from flask import Flask
+from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager
+from flask_cors import CORS
+from datetime import timedelta
+
+from database.db import init_db
 from auth.routes import auth_bp
 from auth.limiter import limiter
+from auth.blacklist import is_token_blacklisted
 
 load_dotenv()
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "change-moi-en-production")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
-app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 
-db.init_app(app)
-limiter.init_app(app)
-jwt = JWTManager(app)
+def create_app():
+    app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
-)
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'change-moi-en-production')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
 
-@jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload):
-    jti = jwt_payload["jti"]
-    return is_token_blacklisted(jti)
+    # Initialise la config DB, db.init_app(app) ET db.create_all() en une fois
+    init_db(app)
 
-app.register_blueprint(auth_bp)
+    limiter.init_app(app)
+    jwt = JWTManager(app)
 
-with app.app_context():
-    db.create_all()
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        jti = jwt_payload["jti"]
+        return is_token_blacklisted(jti)
 
-if __name__ == "__main__":
+    app.register_blueprint(auth_bp)
+
+    # --- ZONE DE CONNEXION POUR MANDRESY ET MIHAJASOA ---
+    # C'est ici que leurs blueprints seront enregistrés plus tard.
+
+    @app.route('/')
+    def index():
+        return {
+            "status": "success",
+            "message": "L'architecture backend fonctionne !"
+        }
+
+    return app
+
+
+if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True, port=5000, host="0.0.0.0")
