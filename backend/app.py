@@ -1,14 +1,15 @@
 import os
+from datetime import timedelta
 from flask import Flask
-from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from datetime import timedelta
+from dotenv import load_dotenv
 
 from database.db import init_db
 from auth.routes import auth_bp
 from auth.limiter import limiter
 from auth.blacklist import is_token_blacklisted
+from summarizer.routes import summarizer_bp
 
 load_dotenv()
 
@@ -21,7 +22,6 @@ def create_app():
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
 
-    # Initialise la config DB, db.init_app(app) ET db.create_all() en une fois
     init_db(app)
 
     limiter.init_app(app)
@@ -33,15 +33,13 @@ def create_app():
         return is_token_blacklisted(jti)
 
     app.register_blueprint(auth_bp)
-
-    # --- ZONE DE CONNEXION POUR MANDRESY ET MIHAJASOA ---
-    # C'est ici que leurs blueprints seront enregistrés plus tard.
+    app.register_blueprint(summarizer_bp)
 
     @app.route('/')
     def index():
         return {
             "status": "success",
-            "message": "L'architecture backend fonctionne !"
+            "message": "L'API centrale tourne parfaitement ! Auth et Summarizer sont synchronisés."
         }
 
     return app

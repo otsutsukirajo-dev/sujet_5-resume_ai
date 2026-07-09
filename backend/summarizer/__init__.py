@@ -1,0 +1,1 @@
+"""Package summarizer : extraction de texte + résumé automatique."""
