@@ -13,6 +13,10 @@ from auth.limiter import limiter
 
 # --- Import des autres modules branchés ---
 # from database.models import Document, Resume   # Laissé pour Mandresy
+from database.db import init_db
+
+init_db(app) 
+
 from summarizer.routes import summarizer_bp     # Activé pour Mihajasoa
 
 load_dotenv()
