@@ -35,7 +35,7 @@ def summarize():
     """
     # Import corrigé par Rajo pour respecter la règle de Meddy (Un seul db central)
     from auth.models import db
-    from database.models import Document, Resume
+    from database.models import Document, Summary
 
     user_id = get_jwt_identity()
 
@@ -92,21 +92,21 @@ def summarize():
     # --- Sauvegarde en base ---
     try:
         document = Document(
-            filename=filename,
-            content=source_text,
-            user_id=user_id,
-            created_at=datetime.utcnow(),
-        )
-        db.session.add(document)
-        db.session.flush()  # Récupère document.id avant le commit final
+    filename=filename,
+    filepath=filepath if "file" in request.files else "texte_direct",
+    user_id=user_id,
+    uploaded_at=datetime.utcnow(),
+)
+db.session.add(document)
+db.session.flush()  # Récupère document.id avant le commit final
 
-        resume = Resume(
-            document_id=document.id,
-            summary_text=summary,
-            created_at=datetime.utcnow(),
-        )
-        db.session.add(resume)
-        db.session.commit()
+resume = Summary(
+    document_id=document.id,
+    summary_text=summary,
+    created_at=datetime.utcnow(),
+)
+db.session.add(resume)
+db.session.commit()
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erreur DB lors de la sauvegarde du résumé : {e}")
@@ -127,19 +127,18 @@ def history():
     """
     Renvoie l'historique des résumés de l'utilisateur connecté.
     """
-    from database.models import Document, Resume
+    from database.models import Document, Summary
 
     user_id = get_jwt_identity()
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
 
-    query = (
-        Resume.query
-        .join(Document, Resume.document_id == Document.id)
-        .filter(Document.user_id == user_id)
-        .order_by(Resume.created_at.desc())
-    )
-
+   query = (
+    Summary.query
+    .join(Document, Summary.document_id == Document.id)
+    .filter(Document.user_id == user_id)
+    .order_by(Summary.created_at.desc())
+)
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
     items = [
