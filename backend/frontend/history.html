@@ -12,7 +12,7 @@
 
     <aside class="rail">
         <div class="rail__brand">
-            <div class="rail__brand-icon">R</div>
+            <div class="rail__brand-icon"><i class="fa-solid fa-file-lines"></i></div>
             <div class="rail__brand-name">Résumé <em>AI</em></div>
         </div>
         <nav class="rail__nav">
@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color:var(--ink-faint); font-size:12px;"></i>
                 </div>
-                <p style="display:none; margin-top:12px; font-family:var(--font-display); font-size:15px; line-height:1.7; border-left:2px solid var(--amber); padding-left:16px; white-space:pre-line;">${Utils.escapeHtml(item.summary)}</p>
+                <p class="history-item__summary-text" style="display:none; margin-top:12px; font-family:var(--font-display); font-size:15px; line-height:1.7; border-left:2px solid var(--amber); padding-left:16px; white-space:pre-line;">${Utils.escapeHtml(item.summary)}</p>
             `;
-            const summaryEl = div.querySelector('p:last-child');
+            const summaryEl = div.querySelector('.history-item__summary-text');
             const chevron = div.querySelector('i');
             div.querySelector('div').addEventListener('click', () => {
                 const isVisible = summaryEl.style.display === 'block';

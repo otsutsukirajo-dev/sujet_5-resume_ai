@@ -1,7 +1,7 @@
 const SUMMARY_STEPS = [
     { icon: 'fa-file-import', label: 'Extraction du texte du document' },
     { icon: 'fa-scissors', label: 'Découpage en segments analysables' },
-    { icon: 'fa-brain', label: 'Analyse par le modèle IA (BART)' },
+    { icon: 'fa-brain', label: 'Analyse par le modèle IA' },
     { icon: 'fa-code-merge', label: 'Fusion des résumés partiels' },
     { icon: 'fa-check-double', label: 'Finalisation du résumé' },
 ];
@@ -34,20 +34,18 @@ const SummaryModule = {
         steps.forEach((el, i) => {
             const icon = el.querySelector('.progress-step__icon');
             if (i < index) {
-                // étape déjà passée
                 el.style.opacity = '0.6';
                 icon.style.borderColor = 'var(--amber)';
                 icon.style.background = 'var(--amber)';
                 icon.style.color = 'var(--paper, #F6F3EC)';
+                icon.querySelector('i').className = 'fa-solid fa-check';
             } else if (i === index) {
-                // étape en cours
                 el.style.opacity = '1';
                 icon.style.borderColor = 'var(--amber)';
                 icon.style.background = 'transparent';
                 icon.style.color = 'var(--amber)';
                 icon.querySelector('i').className = 'fa-solid fa-spinner fa-spin';
             } else {
-                // étape future
                 el.style.opacity = '0.35';
                 icon.style.borderColor = 'var(--rule-strong)';
                 icon.style.background = 'transparent';
@@ -79,7 +77,9 @@ const SummaryModule = {
     },
 
     async generate() {
-        if (!currentSelectedFile) return;
+        const textInput = document.getElementById('text-input');
+        const textValue = textInput ? textInput.value.trim() : '';
+        if (!currentSelectedFile && !textValue) return;
 
         const empty = document.getElementById('result-empty');
         const loading = document.getElementById('result-loading');
@@ -94,12 +94,17 @@ const SummaryModule = {
         badge.classList.remove('visible');
         loading.classList.add('visible');
 
-        this._startProgress(loading);
+        SummaryModule._startProgress(loading);
 
         try {
-            const data = await ApiService.upload('/summarize', currentSelectedFile);
+            let data;
+            if (currentSelectedFile) {
+                data = await ApiService.upload('/summarize', currentSelectedFile);
+            } else {
+                data = await ApiService.post('/summarize', { text: textValue });
+            }
 
-            this._stopProgress();
+            SummaryModule._stopProgress();
             textEl.textContent = data.summary;
 
             loading.classList.remove('visible');
@@ -109,7 +114,7 @@ const SummaryModule = {
 
             if (window.HistoryModule) window.HistoryModule.load();
         } catch (error) {
-            this._stopProgress();
+            SummaryModule._stopProgress();
             loading.classList.remove('visible');
             empty.classList.remove('hidden');
             alert(error.message);
@@ -119,5 +124,13 @@ const SummaryModule = {
 
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('btn-summarize');
-    if (btn) btn.addEventListener('click', () => SummaryModule.generate());
+    const textInput = document.getElementById('text-input');
+    if (btn) btn.addEventListener('click', SummaryModule.generate);
+    if (textInput) {
+        textInput.addEventListener('input', () => {
+            const hasText = textInput.value.trim().length > 0;
+            const hasFile = typeof currentSelectedFile !== 'undefined' && currentSelectedFile;
+            if (btn) btn.disabled = !(hasText || hasFile);
+        });
+    }
 });
