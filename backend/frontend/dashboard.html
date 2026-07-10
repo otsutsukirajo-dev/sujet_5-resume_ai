@@ -12,13 +12,13 @@
 
     <aside class="rail">
         <div class="rail__brand">
-            <div class="rail__brand-icon">R</div>
+            <div class="rail__brand-icon"><i class="fa-solid fa-file-lines"></i></div>
             <div class="rail__brand-name">Résumé <em>AI</em></div>
         </div>
         <nav class="rail__nav">
             <a href="dashboard.html" class="rail__link active"><i class="fa-solid fa-house"></i>Accueil</a>
-            <a href="#" class="rail__link"><i class="fa-solid fa-clock-rotate-left"></i>Historique</a>
-            <a href="#" class="rail__link"><i class="fa-solid fa-gear"></i>Paramètres</a>
+            <a href="history.html" class="rail__link"><i class="fa-solid fa-clock-rotate-left"></i>Historique</a>
+            <a href="settings.html" class="rail__link"><i class="fa-solid fa-gear"></i>Paramètres</a>
         </nav>
         <div class="rail__spacer"></div>
         <button class="rail__logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Déconnexion</button>
@@ -35,7 +35,7 @@
 
         <div class="content">
             <div class="page-head">
-                <h1>Bienvenue 👋</h1>
+                <h1>Bienvenue </h1>
                 <p>Importez un document pour démarrer une analyse.</p>
             </div>
 
@@ -65,10 +65,16 @@
                             <p class="dropzone__hint">.pdf .docx .txt</p>
                         </div>
                         <div class="file-chip" id="file-chip">
-                            <span class="file-chip__name" id="file-name"></span>
-                            <button class="file-chip__remove" id="clear-file" title="Retirer le fichier"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <button class="btn btn-primary btn-generate" id="btn-summarize" disabled>Générer le résumé</button>
+    <span class="file-chip__name" id="file-name"></span>
+    <button class="file-chip__remove" id="clear-file" title="Retirer le fichier"><i class="fa-solid fa-xmark"></i></button>
+</div>
+
+<div style="text-align:center; margin: 14px 0; font-size:12px; color:var(--ink-faint);">— ou —</div>
+
+<textarea id="text-input" placeholder="Collez votre texte ici..." rows="4"
+    style="width:100%; padding:11px 14px; border:1px solid var(--rule-strong); border-radius:var(--radius); font-family:var(--font-body); font-size:13.5px; resize:vertical;"></textarea>
+
+<button class="btn btn-primary btn-generate" id="btn-summarize" disabled>Générer le résumé</button>
                     </div>
 
                     <div class="panel">
