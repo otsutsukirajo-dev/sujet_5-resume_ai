@@ -138,11 +138,15 @@ def history():
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
+    # Récupère les filenames en une seule requête groupée (évite le N+1)
+    doc_ids = [r.document_id for r in pagination.items]
+    documents = {d.id: d.filename for d in Document.query.filter(Document.id.in_(doc_ids)).all()}
+
     items = [
         {
             "resume_id": r.id,
             "document_id": r.document_id,
-            "filename": r.document.filename,
+            "filename": documents.get(r.document_id, "Document introuvable"),
             "summary": r.summary_text,
             "created_at": r.created_at.isoformat(),
         }
