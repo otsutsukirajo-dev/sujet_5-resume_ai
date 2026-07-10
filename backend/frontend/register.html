@@ -1,51 +1,65 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résumé AI — Inscription</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="css/login.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé AI — Inscription</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gray-50 h-screen flex items-center justify-center">
-    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Inscription</h2>
-            <p class="text-sm text-gray-500 mt-2">Créez votre compte pour commencer</p>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="brand-mark">
+            <div class="brand-mark__icon">R</div>
+            <div class="brand-mark__name">Résumé <em>AI</em></div>
         </div>
-        <form id="register-form" class="space-y-5">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" required placeholder="vous@exemple.com" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+
+        <h1>Créer un compte</h1>
+        <p class="sub">Quelques secondes suffisent pour commencer.</p>
+
+        <form id="register-form" novalidate>
+            <div class="field">
+                <label class="label" for="email">Email</label>
+                <input type="email" id="email" placeholder="vous@exemple.com" required>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                <input type="password" id="password" required placeholder="8+ caractères, 1 majuscule, 1 chiffre" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            <div class="field">
+                <label class="label" for="password">Mot de passe</label>
+                <input type="password" id="password" placeholder="8+ car., 1 majuscule, 1 chiffre" required>
             </div>
-            <button type="submit" class="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
-                S'inscrire
-            </button>
+            <button type="submit" class="btn btn-primary" style="width:100%;" id="submit-btn">S'inscrire</button>
+            <p class="error-text" id="form-error"></p>
         </form>
-        <p id="register-error" class="text-sm text-red-600 mt-4 text-center"></p>
-        <div class="mt-6 text-center">
-            <a href="login.html" class="text-sm text-indigo-600 hover:underline">Déjà un compte ? Se connecter</a>
+
+        <div class="auth-footer">
+            Déjà un compte ? <a href="login.html">Se connecter</a>
         </div>
     </div>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const res = await AuthService.register(email, password);
-            if (res.success) {
-                alert("Inscription réussie ! Vous pouvez vous connecter.");
-                window.location.href = 'login.html';
-            } else {
-                document.getElementById('register-error').textContent = res.error;
-            }
-        });
-    </script>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const errorEl = document.getElementById('form-error');
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Création...';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    const res = await AuthService.register(email, password);
+    if (res.success) {
+        window.location.href = 'login.html';
+    } else {
+        errorEl.textContent = res.error;
+        btn.disabled = false;
+        btn.textContent = "S'inscrire";
+    }
+});
+</script>
 </body>
 </html>

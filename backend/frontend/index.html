@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résumé AI — Accueil</title>
-    <script src="js/auth.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (AuthService.isAuthenticated()) {
-                window.location.href = 'dashboard.html';
-            } else {
-                window.location.href = 'login.html';
-            }
-        });
-    </script>
+<meta charset="UTF-8">
+<title>Résumé AI</title>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.location.href = AuthService.isAuthenticated() ? 'dashboard.html' : 'login.html';
+});
+</script>
 </head>
-<body class="loading-body">
-    <p>Chargement de l'application...</p>
-</body>
+<body></body>
 </html>

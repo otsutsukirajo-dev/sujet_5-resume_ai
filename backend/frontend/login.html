@@ -1,47 +1,65 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résumé AI — Connexion</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- <link rel="stylesheet" href="css/style.css"> -->
-    <link rel="stylesheet" href="css/login.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé AI — Connexion</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gray-50 h-screen flex items-center justify-center">
-    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Connexion</h2>
-            <p class="text-sm text-gray-500 mt-2">Accédez à votre espace d'analyse AI</p>
+<body>
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="brand-mark">
+            <div class="brand-mark__icon">R</div>
+            <div class="brand-mark__name">Résumé <em>AI</em></div>
         </div>
-        <form id="login-form" class="space-y-5">
-            <div>
-               <label class="block text-sm font-medium text-gray-700">Email</label>
-               <input type="email" id="username" required placeholder="Entrez votre email" ...>
+
+        <h1>Content de vous revoir</h1>
+        <p class="sub">Connectez-vous pour reprendre vos analyses.</p>
+
+        <form id="login-form" novalidate>
+            <div class="field">
+                <label class="label" for="email">Email</label>
+                <input type="email" id="email" placeholder="vous@exemple.com" required>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                <input type="password" id="password" required placeholder="Entrez votre mot de passe" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            <div class="field">
+                <label class="label" for="password">Mot de passe</label>
+                <input type="password" id="password" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
-                Se connecter
-            </button>
+            <button type="submit" class="btn btn-primary" style="width:100%;" id="submit-btn">Se connecter</button>
+            <p class="error-text" id="form-error"></p>
         </form>
-        <div class="mt-6 text-center">
-            <a href="register.html" class="text-sm text-indigo-600 hover:underline">Pas encore de compte ? S'inscrire</a>
+
+        <div class="auth-footer">
+            Pas encore de compte ? <a href="register.html">Créer un compte</a>
         </div>
     </div>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value;
-            const res = await AuthService.login(u, p);
-            if(res.success) window.location.href = 'dashboard.html';
-            else alert(res.error);
-        });
-    </script>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const errorEl = document.getElementById('form-error');
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Connexion...';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    const res = await AuthService.login(email, password);
+    if (res.success) {
+        window.location.href = 'dashboard.html';
+    } else {
+        errorEl.textContent = res.error;
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+    }
+});
+</script>
 </body>
 </html>

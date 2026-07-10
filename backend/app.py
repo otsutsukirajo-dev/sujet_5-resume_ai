@@ -6,6 +6,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 
 from database.db import init_db
+from database import models as database_models 
 from auth.routes import auth_bp
 from auth.limiter import limiter
 from auth.blacklist import is_token_blacklisted

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé AI — Paramètres</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+    <aside class="rail">
+        <div class="rail__brand">
+            <div class="rail__brand-icon">R</div>
+            <div class="rail__brand-name">Résumé <em>AI</em></div>
+        </div>
+        <nav class="rail__nav">
+            <a href="dashboard.html" class="rail__link"><i class="fa-solid fa-house"></i>Accueil</a>
+            <a href="history.html" class="rail__link"><i class="fa-solid fa-clock-rotate-left"></i>Historique</a>
+            <a href="settings.html" class="rail__link active"><i class="fa-solid fa-gear"></i>Paramètres</a>
+        </nav>
+        <div class="rail__spacer"></div>
+        <button class="rail__logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Déconnexion</button>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar__user">
+                <div class="topbar__avatar" id="user-avatar">–</div>
+                <span class="topbar__email" id="user-email"></span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="page-head">
+                <h1>Paramètres</h1>
+                <p>Informations de votre compte.</p>
+            </div>
+
+            <div class="panel" style="max-width: 420px;">
+                <div class="panel__title"><i class="fa-solid fa-user"></i>Compte</div>
+                <p style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">Connecté en tant que</p>
+                <p style="font-family:var(--font-mono); font-size:14px; font-weight:600;" id="current-email"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+if (!AuthService.isAuthenticated()) window.location.href = 'login.html';
+const userEmail = AuthService.getUser();
+document.getElementById('user-email').textContent = userEmail;
+document.getElementById('current-email').textContent = userEmail;
+const avatar = document.getElementById('user-avatar');
+if (userEmail) {
+    avatar.textContent = userEmail.split('@')[0].split(/[._-]/).map(p => p[0]).join('').substring(0, 2).toUpperCase();
+}
+document.getElementById('btn-logout').addEventListener('click', () => AuthService.logout());
+</script>
+</body>
+</html>
+    

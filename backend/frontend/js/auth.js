@@ -24,7 +24,7 @@ const AuthService = {
         try {
             await ApiService.post('/logout', {}, AUTH_BASE_URL);
         } catch (e) {
-            // même si ça échoue, on déconnecte quand même localement
+            // on déconnecte localement même si l'appel serveur échoue
         }
         localStorage.clear();
         window.location.href = 'login.html';

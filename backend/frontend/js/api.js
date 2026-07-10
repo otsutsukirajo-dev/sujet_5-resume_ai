@@ -1,6 +1,6 @@
-const AUTH_BASE_URL = 'http://localhost:5000/auth';   // routes d'authentification
-const API_BASE_URL = 'http://localhost:5000/api';      // routes résumé (Mihajasoa)
-const API_BASE = "http://192.168.88.186:5000/auth";
+const AUTH_BASE_URL = 'http://localhost:5000/auth';
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const ApiService = {
     getHeaders() {
         const token = localStorage.getItem('jwt_token');
@@ -11,10 +11,12 @@ const ApiService = {
         if (!response.ok) {
             if (response.status === 401) {
                 localStorage.clear();
-                window.location.href = 'login.html';
+                if (!window.location.pathname.endsWith('login.html')) {
+                    window.location.href = 'login.html';
+                }
             }
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.error || `Erreur serveur: ${response.status}`);
+            throw new Error(err.error || `Erreur serveur (${response.status})`);
         }
         return response.json();
     },

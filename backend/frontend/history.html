@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé AI — Historique</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+    <aside class="rail">
+        <div class="rail__brand">
+            <div class="rail__brand-icon">R</div>
+            <div class="rail__brand-name">Résumé <em>AI</em></div>
+        </div>
+        <nav class="rail__nav">
+            <a href="dashboard.html" class="rail__link"><i class="fa-solid fa-house"></i>Accueil</a>
+            <a href="history.html" class="rail__link active"><i class="fa-solid fa-clock-rotate-left"></i>Historique</a>
+            <a href="settings.html" class="rail__link"><i class="fa-solid fa-gear"></i>Paramètres</a>
+        </nav>
+        <div class="rail__spacer"></div>
+        <button class="rail__logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Déconnexion</button>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar__user">
+                <div class="topbar__avatar" id="user-avatar">–</div>
+                <span class="topbar__email" id="user-email"></span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="page-head">
+                <h1>Historique</h1>
+                <p>L'ensemble de vos documents résumés.</p>
+            </div>
+
+            <div class="panel" style="max-width: 760px;">
+                <div id="full-history-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!AuthService.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const userEmail = AuthService.getUser();
+    document.getElementById('user-email').textContent = userEmail;
+    const avatar = document.getElementById('user-avatar');
+    if (userEmail) {
+        avatar.textContent = userEmail.split('@')[0].split(/[._-]/).map(p => p[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => AuthService.logout());
+
+    const container = document.getElementById('full-history-list');
+    try {
+        const data = await ApiService.get('/history');
+        const items = data.items || [];
+
+        if (items.length === 0) {
+            container.innerHTML = '<p class="history-empty">Aucun résumé pour le moment.</p>';
+            return;
+        }
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.style.cssText = 'border:1px solid var(--rule); border-left:3px solid var(--amber); border-radius:4px; padding:14px 16px; cursor:pointer;';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <p style="font-size:13.5px; font-weight:600;">${Utils.escapeHtml(item.filename)}</p>
+                        <p style="font-size:11px; font-family:var(--font-mono); color:var(--ink-faint);">${new Date(item.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color:var(--ink-faint); font-size:12px;"></i>
+                </div>
+                <p style="display:none; margin-top:12px; font-family:var(--font-display); font-size:15px; line-height:1.7; border-left:2px solid var(--amber); padding-left:16px; white-space:pre-line;">${Utils.escapeHtml(item.summary)}</p>
+            `;
+            const summaryEl = div.querySelector('p:last-child');
+            const chevron = div.querySelector('i');
+            div.querySelector('div').addEventListener('click', () => {
+                const isVisible = summaryEl.style.display === 'block';
+                summaryEl.style.display = isVisible ? 'none' : 'block';
+                chevron.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
+            container.appendChild(div);
+        });
+    } catch (e) {
+        container.innerHTML = `<p class="history-empty" style="color:var(--rust);">Erreur de chargement : ${e.message}</p>`;
+    }
+});
+</script>
+</body>
+</html>

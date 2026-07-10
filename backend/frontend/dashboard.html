@@ -1,129 +1,118 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résumé AI — Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé AI — Tableau de bord</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    
-    <nav class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-       <div class="flex h-screen">
-    <aside class="w-56 bg-white border-r border-gray-200 flex flex-col p-4">
-        <div class="flex items-center space-x-2 px-2 mb-8">
-            <div class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <i class="fa-solid fa-file-lines text-indigo-600"></i>
-            </div>
-            <span class="text-lg font-bold">Résumé <span class="text-indigo-600">AI</span></span>
+<body>
+<div class="shell">
+
+    <aside class="rail">
+        <div class="rail__brand">
+            <div class="rail__brand-icon">R</div>
+            <div class="rail__brand-name">Résumé <em>AI</em></div>
         </div>
-        <nav class="flex-1 space-y-1">
-            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-600 text-sm font-medium">
-                <i class="fa-solid fa-house w-4"></i> Accueil
-            </a>
-            <a href="history.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-clock-rotate-left w-4"></i> Historique
-            </a>
-            <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 text-sm">
-                <i class="fa-solid fa-gear w-4"></i> Paramètres
-            </a>
+        <nav class="rail__nav">
+            <a href="dashboard.html" class="rail__link active"><i class="fa-solid fa-house"></i>Accueil</a>
+            <a href="#" class="rail__link"><i class="fa-solid fa-clock-rotate-left"></i>Historique</a>
+            <a href="#" class="rail__link"><i class="fa-solid fa-gear"></i>Paramètres</a>
         </nav>
-        <button id="btn-logout" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 text-sm font-medium">
-            <i class="fa-solid fa-right-from-bracket w-4"></i> Déconnexion
-        </button>
+        <div class="rail__spacer"></div>
+        <button class="rail__logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>Déconnexion</button>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-y-auto">
-        <div class="bg-white border-b border-gray-200 px-6 py-3 flex justify-end items-center">
-            <div class="flex items-center gap-3">
-                <i class="fa-regular fa-bell text-gray-400"></i>
-                <div id="user-avatar" class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-semibold"></div>
-                <span id="user-welcome" class="text-sm font-medium text-gray-700"></span>
+    <div class="main">
+        <div class="topbar">
+            <i class="fa-regular fa-bell topbar__bell"></i>
+            <div class="topbar__user">
+                <div class="topbar__avatar" id="user-avatar">–</div>
+                <span class="topbar__email" id="user-email"></span>
             </div>
         </div>
 
-        <!-- le reste du contenu (max-w-7xl ...) vient ici -->
-    </div>
-</div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-        <div class="max-w-7xl mx-auto w-full px-6 pt-6">
-    <h2 class="text-xl font-bold text-gray-900">Bienvenue 👋</h2>
-    <p class="text-sm text-gray-500 mb-6">Importez un document pour démarrer une analyse IA.</p>
-
-    <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl p-4 border border-gray-100">
-            <p class="text-xs text-gray-400 mb-1">Documents résumés</p>
-            <p id="stat-total" class="text-2xl font-bold text-gray-900">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-4 border border-gray-100">
-            <p class="text-xs text-gray-400 mb-1">Ce mois-ci</p>
-            <p id="stat-month" class="text-2xl font-bold text-gray-900">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-4 border border-gray-100">
-            <p class="text-xs text-gray-400 mb-1">Dernier résumé</p>
-            <p id="stat-last" class="text-2xl font-bold text-gray-900">—</p>
-        </div>
-    </div>
-</div>
-        <div class="space-y-6 lg:col-span-1">
-            <div id="upload-container" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 class="text-base font-semibold mb-4">Nouveau document</h3>
-                <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-500 cursor-pointer transition">
-                    <input type="file" id="file-input" title="Sélectionner un fichier" class="hidden" accept=".txt,.pdf,.docx">
-                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
-                    <p class="text-sm font-medium">Glissez votre fichier ici</p>
-                </div>
-                <div id="file-details" class="mt-3 text-xs text-gray-500 hidden justify-between bg-gray-50 p-2 rounded items-center">
-                    <span id="file-name" class="truncate max-w-[180px]"></span>
-                    <button id="clear-file" title="Supprimer le fichier" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <button id="btn-summarize" disabled class="mt-4 w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">Générer le résumé</button>
+        <div class="content">
+            <div class="page-head">
+                <h1>Bienvenue 👋</h1>
+                <p>Importez un document pour démarrer une analyse.</p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h3 class="text-base font-semibold mb-4">Vos anciens résumés</h3>
-                <div id="history-list" class="space-y-3 max-h-64 overflow-y-auto">
+            <div class="stat-row">
+                <div class="stat-card" data-tag="total">
+                    <div class="stat-card__label">Documents résumés</div>
+                    <div class="stat-card__value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card" data-tag="recent">
+                    <div class="stat-card__label">Dernier résumé</div>
+                    <div class="stat-card__value" id="stat-last" style="font-size:16px;">—</div>
+                </div>
+                <div class="stat-card" data-tag="statut">
+                    <div class="stat-card__label">Statut du modèle</div>
+                    <div class="stat-card__value" style="font-size:16px; color: var(--sage);">Prêt</div>
+                </div>
+            </div>
+
+            <div class="workspace">
+                <div class="col-left">
+                    <div class="panel">
+                        <div class="panel__title"><i class="fa-solid fa-file-arrow-up"></i>Nouveau document</div>
+                        <div class="dropzone" id="dropzone">
+                            <input type="file" id="file-input" accept=".txt,.pdf,.docx" title="Sélectionner un fichier">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <p class="dropzone__text">Glissez un fichier ici</p>
+                            <p class="dropzone__hint">.pdf .docx .txt</p>
+                        </div>
+                        <div class="file-chip" id="file-chip">
+                            <span class="file-chip__name" id="file-name"></span>
+                            <button class="file-chip__remove" id="clear-file" title="Retirer le fichier"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <button class="btn btn-primary btn-generate" id="btn-summarize" disabled>Générer le résumé</button>
                     </div>
-            </div>
-        </div>
 
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[450px]">
-          <div class="flex justify-between items-center border-b pb-4 mb-4">
-    <h3 class="text-lg font-semibold">Résultat de l'analyse</h3>
-    <div class="flex items-center gap-3">
-        <span id="status-badge" class="hidden px-3 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700">
-            <i class="fa-solid fa-check mr-1"></i>Terminé
-        </span>
-        <div id="export-actions" class="hidden">
-            <button id="btn-export-txt" class="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 font-medium">
-                <i class="fa-solid fa-download mr-1"></i> Exporter TXT
-            </button>
+                    <div class="panel">
+                        <div class="panel__title"><i class="fa-solid fa-box-archive"></i>Historique récent</div>
+                        <div class="history-list" id="history-list"></div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="result-panel">
+                        <div class="result-panel__head">
+                            <h2>Résultat de l'analyse</h2>
+                            <span class="status-pill" id="status-badge"><i class="fa-solid fa-check"></i>Terminé</span>
+                        </div>
+                        <div class="result-body">
+                            <div class="result-empty" id="result-empty">
+                                <i class="fa-regular fa-file-lines"></i>
+                                <p>En attente d'un document à résumer.</p>
+                            </div>
+                            <div class="result-loading" id="result-loading">
+                                <div class="spinner"></div>
+                                <p>Analyse en cours…</p>
+                            </div>
+                            <div class="result-text-wrap" id="result-text-wrap">
+                                <p class="result-text" id="result-text"></p>
+                            </div>
+                        </div>
+                        <div class="result-actions" id="result-actions">
+                            <button class="btn btn-ghost" id="btn-export-txt"><i class="fa-solid fa-download"></i>Exporter .txt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-            
-            <div id="summary-display" class="flex-1 flex flex-col justify-center items-center text-gray-500 text-sm">
-                <p id="summary-placeholder"><i class="fa-solid fa-wand-magic-sparkles text-3xl mb-2 block text-center"></i>En attente de document...</p>
-                <div id="summary-loading" class="hidden text-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mx-auto mb-2"></div>
-                    <p>Calcul du modèle NLP en cours...</p>
-                </div>
-                <p id="summary-text" class="w-full text-gray-800 text-justify whitespace-pre-line hidden"></p>
-            </div>
-        </div>
-    </div>
 
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/upload.js"></script>
-    <script src="js/summary.js"></script>
-    <script src="js/history.js"></script>
-    <script src="js/export.js"></script>
-    <script src="js/dashboard.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/summary.js"></script>
+<script src="js/history.js"></script>
+<script src="js/export.js"></script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>

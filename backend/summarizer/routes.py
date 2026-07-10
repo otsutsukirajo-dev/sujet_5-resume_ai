@@ -33,15 +33,14 @@ def summarize():
     Reçoit soit un fichier (multipart/form-data, champ 'file'),
     soit du texte brut (JSON: {"text": "..."}), et renvoie un résumé.
     """
-    # Import corrigé par Rajo pour respecter la règle de Meddy (Un seul db central)
     from auth.models import db
     from database.models import Document, Summary
 
     user_id = get_jwt_identity()
 
-    # --- Récupération du texte source ---
     source_text = None
     filename = None
+    filepath = None
 
     if "file" in request.files:
         file = request.files["file"]
@@ -76,37 +75,34 @@ def summarize():
     if not source_text or not source_text.strip():
         return jsonify({"error": "Aucun texte exploitable trouvé."}), 422
 
-    # --- Paramètres optionnels de résumé ---
     max_length = request.form.get("max_length", type=int) or \
                  (request.json.get("max_length") if request.is_json else None) or 150
     min_length = request.form.get("min_length", type=int) or \
                  (request.json.get("min_length") if request.is_json else None) or 40
 
-    # --- Génération du résumé ---
     try:
         summary = summarize_text(source_text, max_length=max_length, min_length=min_length)
     except SummarizationError as e:
         logger.error(f"Échec de résumé pour user {user_id} : {e}")
         return jsonify({"error": str(e)}), 500
 
-    # --- Sauvegarde en base ---
     try:
         document = Document(
-    filename=filename,
-    filepath=filepath if "file" in request.files else "texte_direct",
-    user_id=user_id,
-    uploaded_at=datetime.utcnow(),
-)
-db.session.add(document)
-db.session.flush()  # Récupère document.id avant le commit final
+            filename=filename,
+            filepath=filepath if filepath else "texte_direct",
+            user_id=user_id,
+            uploaded_at=datetime.utcnow(),
+        )
+        db.session.add(document)
+        db.session.flush()
 
-resume = Summary(
-    document_id=document.id,
-    summary_text=summary,
-    created_at=datetime.utcnow(),
-)
-db.session.add(resume)
-db.session.commit()
+        resume = Summary(
+            document_id=document.id,
+            summary_text=summary,
+            created_at=datetime.utcnow(),
+        )
+        db.session.add(resume)
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erreur DB lors de la sauvegarde du résumé : {e}")
@@ -133,12 +129,13 @@ def history():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
 
-   query = (
-    Summary.query
-    .join(Document, Summary.document_id == Document.id)
-    .filter(Document.user_id == user_id)
-    .order_by(Summary.created_at.desc())
-)
+    query = (
+        Summary.query
+        .join(Document, Summary.document_id == Document.id)
+        .filter(Document.user_id == user_id)
+        .order_by(Summary.created_at.desc())
+    )
+
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
     items = [
