@@ -1,12 +1,28 @@
 import logging
 from functools import lru_cache
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL_NAME = "facebook/bart-large-cnn"
 MIN_CHUNK_TOKENS = 50
 SAFETY_MARGIN = 20  # marge de sécurité en tokens sous la limite du modèle
+
+# --- Paramètres de la longueur proportionnelle -----------------------------
+# Le résumé final doit représenter environ SUMMARY_RATIO du texte source,
+# borné par un plancher/plafond pour éviter les extrêmes (texte minuscule
+# ou document énorme donnant un résumé ingérable).
+SUMMARY_RATIO = 0.20          # ~20% du nombre de mots source
+MIN_TARGET_WORDS = 150        # plancher : jamais un résumé plus court que ça
+MAX_TARGET_WORDS = 1200       # plafond : jamais un résumé absurdement long
+MIN_LENGTH_RATIO = 0.55       # min_length = ~55% du max_length calculé
+
+# Pour les résumés PARTIELS (passes intermédiaires du map-reduce), on
+# applique le même ratio à chaque chunk plutôt qu'une cible fixe, avec
+# un plancher plus bas car un chunk individuel est plus petit que le
+# document entier.
+PARTIAL_MIN_TARGET_WORDS = 60
+PARTIAL_MAX_TARGET_WORDS = 300
 
 
 class SummarizationError(Exception):
@@ -52,10 +68,25 @@ def _split_into_token_chunks(pipeline_obj, text: str, max_tokens: int) -> List[s
     return chunks
 
 
+def _compute_target_length(word_count: int, floor: int, ceiling: int, ratio: float = SUMMARY_RATIO):
+    """
+    Calcule (max_length, min_length) proportionnels au nombre de mots
+    d'un texte, bornés par [floor, ceiling].
+    """
+    target_max = int(word_count * ratio)
+    target_max = max(floor, min(ceiling, target_max))
+    target_min = max(1, int(target_max * MIN_LENGTH_RATIO))
+    if target_min >= target_max:
+        target_min = max(1, target_max - 1)
+    return target_max, target_min
+
+
 def _summarize_chunk(pipeline_obj, chunk: str, max_length: int, min_length: int) -> str:
     word_count = len(chunk.split())
     safe_max = min(max_length, max(word_count, MIN_CHUNK_TOKENS))
     safe_min = min(min_length, safe_max - 1) if safe_max > 1 else 1
+
+    print(f"[DEBUG] chunk: {word_count} mots -> pipeline appelé avec max_length={safe_max}, min_length={safe_min}")
 
     try:
         result = pipeline_obj(
@@ -65,15 +96,17 @@ def _summarize_chunk(pipeline_obj, chunk: str, max_length: int, min_length: int)
             do_sample=False,
             truncation=True,
         )
-        return result[0]["summary_text"].strip()
+        summary = result[0]["summary_text"].strip()
+        print(f"[DEBUG] résultat brut du pipeline : {len(summary.split())} mots -> \"{summary[:120]}...\"")
+        return summary
     except Exception as e:
         raise SummarizationError(f"Erreur pendant la génération du résumé : {e}")
 
 
 def summarize_text(
     text: str,
-    max_length: int = 150,
-    min_length: int = 40,
+    max_length: Optional[int] = None,
+    min_length: Optional[int] = None,
     model_name: str = DEFAULT_MODEL_NAME,
 ) -> str:
     """
@@ -81,9 +114,37 @@ def summarize_text(
     Utilise une réduction récursive (map-reduce) : le document est
     découpé, chaque morceau est résumé, les résumés sont recombinés,
     et on recommence tant que le résultat ne tient pas en un seul bloc.
+
+    La longueur cible du résumé FINAL est proportionnelle au nombre de
+    mots du texte source (voir SUMMARY_RATIO), sauf si max_length/
+    min_length sont fournis explicitement par l'appelant (ex: si le
+    frontend envoie un jour une préférence utilisateur) — dans ce cas
+    ces valeurs priment.
+
+    Les résumés PARTIELS (passes intermédiaires) suivent le même
+    principe : chaque chunk est résumé proportionnellement à sa propre
+    taille, au lieu d'une cible fixe (120/30) identique pour tous.
     """
     if not text or not text.strip():
         raise SummarizationError("Le texte à résumer est vide.")
+
+    original_word_count = len(text.split())
+
+    # Cible du résumé final : fournie explicitement, ou calculée
+    # proportionnellement au texte source.
+    if max_length is None:
+        final_max_length, computed_min = _compute_target_length(
+            original_word_count, MIN_TARGET_WORDS, MAX_TARGET_WORDS
+        )
+        final_min_length = min_length if min_length is not None else computed_min
+    else:
+        final_max_length = max_length
+        final_min_length = min_length if min_length is not None else max(40, int(max_length * MIN_LENGTH_RATIO))
+
+    logger.info(
+        f"Document de {original_word_count} mots -> cible de résumé final : "
+        f"{final_min_length}-{final_max_length} mots (ratio {SUMMARY_RATIO:.0%})."
+    )
 
     pipeline_obj = _get_pipeline(model_name)
     model_max = _get_model_max_tokens(pipeline_obj)
@@ -97,19 +158,25 @@ def summarize_text(
 
         if len(chunks) == 1:
             logger.info(f"Résumé final généré en {pass_number} passe(s).")
-            return _summarize_chunk(pipeline_obj, chunks[0], max_length, min_length)
+            return _summarize_chunk(pipeline_obj, chunks[0], final_max_length, final_min_length)
 
         logger.info(
             f"Passe {pass_number} : document découpé en {len(chunks)} morceaux."
         )
 
-        partial_summaries = [
-            _summarize_chunk(pipeline_obj, c, max_length=120, min_length=30)
-            for c in chunks
-        ]
+        partial_summaries = []
+        for c in chunks:
+            chunk_word_count = len(c.split())
+            chunk_max, chunk_min = _compute_target_length(
+                chunk_word_count, PARTIAL_MIN_TARGET_WORDS, PARTIAL_MAX_TARGET_WORDS
+            )
+            partial_summaries.append(
+                _summarize_chunk(pipeline_obj, c, max_length=chunk_max, min_length=chunk_min)
+            )
+
         current_text = " ".join(partial_summaries)
         pass_number += 1
 
         if pass_number > 15:
             logger.warning("Nombre de passes de réduction élevé, arrêt forcé.")
-            return _summarize_chunk(pipeline_obj, current_text, max_length, min_length)
+            return _summarize_chunk(pipeline_obj, current_text, final_max_length, final_min_length)
