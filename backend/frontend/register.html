@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résumé AI — Inscription</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="bg-gray-50 h-screen flex items-center justify-center">
+    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Inscription</h2>
+            <p class="text-sm text-gray-500 mt-2">Créez votre compte pour commencer</p>
+        </div>
+        <form id="register-form" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" required placeholder="vous@exemple.com" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                <input type="password" id="password" required placeholder="8+ caractères, 1 majuscule, 1 chiffre" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                S'inscrire
+            </button>
+        </form>
+        <p id="register-error" class="text-sm text-red-600 mt-4 text-center"></p>
+        <div class="mt-6 text-center">
+            <a href="login.html" class="text-sm text-indigo-600 hover:underline">Déjà un compte ? Se connecter</a>
+        </div>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const res = await AuthService.register(email, password);
+            if (res.success) {
+                alert("Inscription réussie ! Vous pouvez vous connecter.");
+                window.location.href = 'login.html';
+            } else {
+                document.getElementById('register-error').textContent = res.error;
+            }
+        });
+    </script>
+</body>
+</html>
