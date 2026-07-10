@@ -4,7 +4,15 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+# MODELE : plguillou/t5-base-fr-sum-cnndm est entraine NATIVEMENT en francais
+# (fine-tune sur CNN/DailyMail traduit en francais), contrairement a
+# facebook/bart-large-cnn qui est entraine uniquement en anglais et melange
+# des mots anglais dans les resumes francais ("of", "It", "algorithm"...).
+# Ce modele est de type T5 : il attend un prefixe "summarize: " devant le
+# texte a resumer (voir MODEL_PROMPT_PREFIX plus bas).
 DEFAULT_MODEL_NAME = "facebook/bart-large-cnn"
+MODEL_PROMPT_PREFIX = ""  # requis par les modeles T5 (ex: "summarize: "). Vide pour bart-large-cnn.
+
 MIN_CHUNK_TOKENS = 50
 SAFETY_MARGIN = 20  # marge de sécurité en tokens sous la limite du modèle
 
@@ -23,6 +31,15 @@ MIN_LENGTH_RATIO = 0.55       # min_length = ~55% du max_length calculé
 # document entier.
 PARTIAL_MIN_TARGET_WORDS = 60
 PARTIAL_MAX_TARGET_WORDS = 300
+
+# CORRECTION MOTS -> TOKENS : max_length/min_length du pipeline HuggingFace
+# sont exprimés en TOKENS, pas en mots. Pour un texte français, un tokenizer
+# produit en général plus de tokens que de mots (subword splitting). On
+# multiplie donc nos cibles "en mots" par ce facteur avant de les envoyer
+# au pipeline, pour obtenir une longueur de sortie réellement proche de ce
+# qui est demandé. Valeur prudente ajustable si les résumés restent trop
+# courts/longs après tests.
+TOKENS_PER_WORD_FACTOR = 1.4
 
 
 class SummarizationError(Exception):
@@ -46,7 +63,7 @@ def _get_pipeline(model_name: str = DEFAULT_MODEL_NAME):
 def _get_model_max_tokens(pipeline_obj) -> int:
     model_max = getattr(pipeline_obj.tokenizer, "model_max_length", 1024)
     if not model_max or model_max > 100000:
-        model_max = 1024  # valeur sûre par défaut pour bart-large-cnn
+        model_max = 1024  # valeur sûre par défaut
     return model_max
 
 
@@ -70,8 +87,9 @@ def _split_into_token_chunks(pipeline_obj, text: str, max_tokens: int) -> List[s
 
 def _compute_target_length(word_count: int, floor: int, ceiling: int, ratio: float = SUMMARY_RATIO):
     """
-    Calcule (max_length, min_length) proportionnels au nombre de mots
-    d'un texte, bornés par [floor, ceiling].
+    Calcule (max_length, min_length) EN MOTS, proportionnels au nombre de
+    mots d'un texte, bornés par [floor, ceiling]. La conversion en tokens
+    (pour le pipeline) se fait séparément via TOKENS_PER_WORD_FACTOR.
     """
     target_max = int(word_count * ratio)
     target_max = max(floor, min(ceiling, target_max))
@@ -81,24 +99,27 @@ def _compute_target_length(word_count: int, floor: int, ceiling: int, ratio: flo
     return target_max, target_min
 
 
-def _summarize_chunk(pipeline_obj, chunk: str, max_length: int, min_length: int) -> str:
+def _summarize_chunk(pipeline_obj, chunk: str, max_length_words: int, min_length_words: int) -> str:
     word_count = len(chunk.split())
-    safe_max = min(max_length, max(word_count, MIN_CHUNK_TOKENS))
-    safe_min = min(min_length, safe_max - 1) if safe_max > 1 else 1
 
-    print(f"[DEBUG] chunk: {word_count} mots -> pipeline appelé avec max_length={safe_max}, min_length={safe_min}")
+    # Conversion mots -> tokens pour le pipeline (voir TOKENS_PER_WORD_FACTOR).
+    max_length_tokens = int(max_length_words * TOKENS_PER_WORD_FACTOR)
+    min_length_tokens = int(min_length_words * TOKENS_PER_WORD_FACTOR)
+
+    safe_max = min(max_length_tokens, max(word_count, MIN_CHUNK_TOKENS))
+    safe_min = min(min_length_tokens, safe_max - 1) if safe_max > 1 else 1
+
+    prompted_chunk = f"{MODEL_PROMPT_PREFIX}{chunk}" if MODEL_PROMPT_PREFIX else chunk
 
     try:
         result = pipeline_obj(
-            chunk,
+            prompted_chunk,
             max_length=safe_max,
             min_length=safe_min,
             do_sample=False,
             truncation=True,
         )
-        summary = result[0]["summary_text"].strip()
-        print(f"[DEBUG] résultat brut du pipeline : {len(summary.split())} mots -> \"{summary[:120]}...\"")
-        return summary
+        return result[0]["summary_text"].strip()
     except Exception as e:
         raise SummarizationError(f"Erreur pendant la génération du résumé : {e}")
 
@@ -117,21 +138,17 @@ def summarize_text(
 
     La longueur cible du résumé FINAL est proportionnelle au nombre de
     mots du texte source (voir SUMMARY_RATIO), sauf si max_length/
-    min_length sont fournis explicitement par l'appelant (ex: si le
-    frontend envoie un jour une préférence utilisateur) — dans ce cas
-    ces valeurs priment.
+    min_length sont fournis explicitement par l'appelant.
 
     Les résumés PARTIELS (passes intermédiaires) suivent le même
     principe : chaque chunk est résumé proportionnellement à sa propre
-    taille, au lieu d'une cible fixe (120/30) identique pour tous.
+    taille, au lieu d'une cible fixe identique pour tous.
     """
     if not text or not text.strip():
         raise SummarizationError("Le texte à résumer est vide.")
 
     original_word_count = len(text.split())
 
-    # Cible du résumé final : fournie explicitement, ou calculée
-    # proportionnellement au texte source.
     if max_length is None:
         final_max_length, computed_min = _compute_target_length(
             original_word_count, MIN_TARGET_WORDS, MAX_TARGET_WORDS
@@ -171,7 +188,7 @@ def summarize_text(
                 chunk_word_count, PARTIAL_MIN_TARGET_WORDS, PARTIAL_MAX_TARGET_WORDS
             )
             partial_summaries.append(
-                _summarize_chunk(pipeline_obj, c, max_length=chunk_max, min_length=chunk_min)
+                _summarize_chunk(pipeline_obj, c, chunk_max, chunk_min)
             )
 
         current_text = " ".join(partial_summaries)
