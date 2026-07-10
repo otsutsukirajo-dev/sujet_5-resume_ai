@@ -46,17 +46,22 @@ def _get_model_max_tokens(pipeline_obj) -> int:
     return model_max
 
 
-def _split_into_token_chunks(pipeline_obj, text: str, max_tokens: int) -> List[str]:
+def _decouper_par_dichotomie(pipeline_obj, text: str, max_tokens: int) -> List[str]:
+    """
+    Decoupe le texte source en sous-parties (dichotomie du document) dont
+    la taille en TOKENS reste sous la limite du modele. Chaque sous-partie
+    sera resumee independamment avant recombinaison.
+    """
     tokenizer = pipeline_obj.tokenizer
     token_ids = tokenizer.encode(text, add_special_tokens=False)
 
-    chunks = []
+    sous_parties = []
     for i in range(0, len(token_ids), max_tokens):
         chunk_ids = token_ids[i:i + max_tokens]
         chunk_text = tokenizer.decode(chunk_ids, skip_special_tokens=True)
         if chunk_text.strip():
-            chunks.append(chunk_text)
-    return chunks
+            sous_parties.append(chunk_text)
+    return sous_parties
 
 
 def _compute_target_length(word_count: int, floor: int, ceiling: int, ratio: float = SUMMARY_RATIO):
@@ -68,7 +73,8 @@ def _compute_target_length(word_count: int, floor: int, ceiling: int, ratio: flo
     return target_max, target_min
 
 
-def _summarize_chunk(pipeline_obj, chunk: str, max_length_words: int, min_length_words: int) -> str:
+def _resumer_sous_partie(pipeline_obj, chunk: str, max_length_words: int, min_length_words: int) -> str:
+    """Genere le resume d'une seule sous-partie issue de la dichotomie."""
     word_count = len(chunk.split())
 
     max_length_tokens = int(max_length_words * TOKENS_PER_WORD_FACTOR)
@@ -98,6 +104,13 @@ def summarize_text(
     min_length: int = 40,
     model_name: str = DEFAULT_MODEL_NAME,
 ) -> str:
+    """
+    Genere un resume, quelle que soit la longueur du texte source, par
+    DICHOTOMIE RECURSIVE : le document est decoupe en sous-parties, chaque
+    sous-partie est resumee independamment, les resumes partiels sont
+    recombines en un nouveau texte, et on recommence la dichotomie sur ce
+    nouveau texte tant qu'il ne tient pas en une seule sous-partie.
+    """
     if not text or not text.strip():
         raise SummarizationError("Le texte a resumer est vide.")
 
@@ -119,31 +132,33 @@ def summarize_text(
 
     pipeline_obj = _get_pipeline(model_name)
     model_max = _get_model_max_tokens(pipeline_obj)
-    safe_chunk_tokens = model_max - SAFETY_MARGIN
+    taille_max_sous_partie = model_max - SAFETY_MARGIN
 
-    current_text = text
-    pass_number = 1
+    texte_courant = text
+    niveau_dichotomie = 1
 
     while True:
-        chunks = _split_into_token_chunks(pipeline_obj, current_text, safe_chunk_tokens)
+        sous_parties = _decouper_par_dichotomie(pipeline_obj, texte_courant, taille_max_sous_partie)
 
-        if len(chunks) == 1:
-            logger.info(f"Resume final genere en {pass_number} passe(s).")
-            return _summarize_chunk(pipeline_obj, chunks[0], final_max_length, final_min_length)
+        if len(sous_parties) == 1:
+            logger.info(f"Resume final obtenu apres {niveau_dichotomie} niveau(x) de dichotomie.")
+            return _resumer_sous_partie(pipeline_obj, sous_parties[0], final_max_length, final_min_length)
 
-        logger.info(f"Passe {pass_number} : document decoupe en {len(chunks)} morceaux.")
+        logger.info(
+            f"Niveau {niveau_dichotomie} de dichotomie : document divise en {len(sous_parties)} sous-parties."
+        )
 
-        partial_summaries = []
-        for c in chunks:
-            chunk_word_count = len(c.split())
-            chunk_max, chunk_min = _compute_target_length(
-                chunk_word_count, PARTIAL_MIN_TARGET_WORDS, PARTIAL_MAX_TARGET_WORDS
+        resumes_partiels = []
+        for partie in sous_parties:
+            mots_partie = len(partie.split())
+            cible_max, cible_min = _compute_target_length(
+                mots_partie, PARTIAL_MIN_TARGET_WORDS, PARTIAL_MAX_TARGET_WORDS
             )
-            partial_summaries.append(_summarize_chunk(pipeline_obj, c, chunk_max, chunk_min))
+            resumes_partiels.append(_resumer_sous_partie(pipeline_obj, partie, cible_max, cible_min))
 
-        current_text = " ".join(partial_summaries)
-        pass_number += 1
+        texte_courant = " ".join(resumes_partiels)
+        niveau_dichotomie += 1
 
-        if pass_number > 15:
-            logger.warning("Nombre de passes eleve, arret force.")
-            return _summarize_chunk(pipeline_obj, current_text, final_max_length, final_min_length)
+        if niveau_dichotomie > 15:
+            logger.warning("Nombre de niveaux de dichotomie eleve, arret force.")
+            return _resumer_sous_partie(pipeline_obj, texte_courant, final_max_length, final_min_length)
