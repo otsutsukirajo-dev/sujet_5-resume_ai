@@ -53,7 +53,6 @@ def extract_text(filepath: str) -> str:
 
 
 def _extract_from_pdf(filepath: str) -> str:
-    """Extrait le texte d'un PDF page par page avec pdfplumber."""
     text_parts = []
     try:
         with pdfplumber.open(filepath) as pdf:
