@@ -1,4 +1,4 @@
-# 🔗 Guide d'intégration — Module Authentification & Sécurité
+#  Guide d'intégration — Module Authentification & Sécurité
 
 **Auteur du module :** Meddy (Personne 3)
 **Dossier concerné :** `backend/auth/`
@@ -8,7 +8,7 @@ Ce document explique comment chaque membre de l'équipe doit intégrer son trava
 
 ---
 
-## 📦 Ce que le module `auth/` fournit
+##  Ce que le module `auth/` fournit
 
 | Élément | Fichier | Description |
 |---|---|---|
@@ -34,7 +34,7 @@ Ce document explique comment chaque membre de l'équipe doit intégrer son trava
 
 ---
 
-## 👤 Rjo — Backend & Architecture API (app.py principal)
+##  Rjo — Backend & Architecture API (app.py principal)
 
 Ton `app.py` final doit importer et assembler tous les modules, sans rien recréer en double.
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     app.run(debug=True, port=5000)
 ```
 
-### ⚠️ Points de vigilance
+###  Points de vigilance
 1. **Un seul `db`** — jamais `SQLAlchemy()` recréé ailleurs.
 2. **Un seul `JWTManager`**.
 3. **Ordre important** : `db.init_app(app)` avant `db.create_all()`, blueprints enregistrés avant `app.run()`.
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
 ---
 
-## 👤 Mandresy — Base de données & Stockage
+##  Mandresy — Base de données & Stockage
 
 ### Règle la plus importante
 Ne jamais créer un deuxième `SQLAlchemy()`. Importer et réutiliser le `db` existant.
@@ -171,7 +171,7 @@ class Resume(db.Model):
         }
 ```
 
-### ⚠️ Points de vigilance
+###  Points de vigilance
 1. Toujours `from auth.models import db, User` — jamais recréer `db`.
 2. Le nom de table de `User` est `users` → `db.ForeignKey("users.id")`.
 3. Récupérer l'utilisateur connecté avec `get_jwt_identity()` dans les routes protégées.
@@ -179,7 +179,7 @@ class Resume(db.Model):
 
 ---
 
-## 👤 Mihajasoa — Module IA / NLP (résumé automatique)
+##  Mihajasoa — Module IA / NLP (résumé automatique)
 
 ### Dépendance à installer
 ```bash
@@ -243,7 +243,7 @@ def get_history():
     return jsonify([r.to_dict() for r in resumes]), 200
 ```
 
-### ⚠️ Points de vigilance
+###  Points de vigilance
 1. Toujours `@jwt_required()` sur les routes du module.
 2. `get_jwt_identity()` retourne l'id sous forme de `str` — attention si conversion nécessaire.
 3. Import propre : `from auth.models import db, User` et `from database.models import Document, Resume`.
@@ -252,7 +252,7 @@ def get_history():
 
 ---
 
-## 👤 Feno — Frontend / Interface utilisateur
+##  Feno — Frontend / Interface utilisateur
 
 ### Base URL de l'API (en local)
 ```
@@ -332,7 +332,7 @@ localStorage.removeItem("refresh_token");
 
 ---
 
-## ✅ Checklist générale avant le merge final
+##  Le merge final
 
 - [ ] Tout le monde utilise le même `db` (importé depuis `auth/models.py`)
 - [ ] Un seul `JWTManager`, un seul `Limiter`, un seul `CORS(app)`
