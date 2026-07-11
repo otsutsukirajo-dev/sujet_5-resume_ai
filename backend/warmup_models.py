@@ -1,10 +1,7 @@
 """
 Script de PRECHAUFFAGE des modeles IA.
 
-A lancer UNE FOIS, a l'avance (pas le jour de la demo/soutenance), sur
-chaque machine qui va faire tourner le projet : la tienne, celles de tes
-coequipiers, et surtout la machine qui servira le jour de l'evaluation
-si ce n'est pas la meme.
+A lancer UNE FOIS, a l'avance 
 
 Ca telecharge et met en cache les 3 modeles IA (BART + les 2 modeles de
 traduction) SANS avoir besoin de lancer Flask ni de resumer un vrai
