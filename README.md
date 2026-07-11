@@ -67,4 +67,4 @@ Une fois ce script terminé, l'application peut être lancée normalement (`pyth
 
 Nb :
 
-on a ajouté deux passages de traduction complets (avant et après le résumé), donc pour un document long, le nombre total de calculs a grosso modo doublé ou triplé Sur CPU (pas de carte graphique dédiée détectée), chaque morceau prend du temps, et avec ~50 morceaux à traduire, ça s'additionne, ce veut dire en d'autre terme que l'IA peut gérer des plusieurs cinquante de pages, mais l'IA vise la perfection pour le résumé, donc ça va prendre du temps pour un document de plusieurs pages. 
+on a ajouté deux passages de traduction complets (avant et après le résumé), donc pour un document long, le nombre total de calculs a grosso modo doublé ou triplé Sur CPU (pas de carte graphique dédiée détectée), chaque morceau prend du temps, et avec ~50 morceaux à traduire, ça s'additionne, ce veut dire en d'autre terme que l'IA peut gérer des plusieurs cinquantaine de pages, mais l'IA vise la perfection pour le résumé, donc ça va prendre du temps pour un document de plusieurs pages. 
