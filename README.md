@@ -42,11 +42,11 @@ Voici notre répartition en 5 rôles complémentaires pour le projet "Résumé A
 
 ---
 
-## ⚠️ Avant de tester le module de résumé IA (important)
+ ⚠️ Avant de tester le module de résumé IA (important)
 
 Le module IA repose sur 3 modèles pré-entraînés (Hugging Face) qui ne sont **pas inclus dans ce dépôt** (trop volumineux pour GitHub, limite de 100 Mo par fichier). Ils se téléchargent **automatiquement** au premier lancement.
 
-**⚠️ Prévoir environ 2,2 Go de téléchargement et une connexion internet stable au premier test.**
+⚠️ Prévoir environ 2,2 Go de téléchargement et une connexion internet stable au premier test.**
 
 | Modèle | Rôle | Taille |
 |---|---|---|
@@ -64,3 +64,7 @@ python warmup_models.py
 ```
 
 Une fois ce script terminé, l'application peut être lancée normalement (`python app.py`) et générer des résumés sans délai de téléchargement.
+
+Nb :
+
+on a ajouté deux passages de traduction complets (avant et après le résumé), donc pour un document long, le nombre total de calculs a grosso modo doublé ou triplé Sur CPU (pas de carte graphique dédiée détectée), chaque morceau prend du temps, et avec ~50 morceaux à traduire, ça s'additionne, ce veut dire en d'autre terme que l'IA peut gérer des plusieurs cinquante de pages, mais l'IA vise la perfection pour le résumé, donc ça va prendre du temps pour un document de plusieurs pages. 
