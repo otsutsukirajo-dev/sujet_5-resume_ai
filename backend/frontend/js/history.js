@@ -56,7 +56,7 @@ const HistoryModule = {
     }
 };
 
-// IMPORTANT pour vous les amis: dans un script classique (non-module), une déclaration `const`
+// IMPORTANT : dans un script classique (non-module), une déclaration `const`
 // au niveau global n'est PAS automatiquement attachée à `window`.
 // dashboard.js teste `if (window.HistoryModule)` avant d'appeler .load(),
 // donc sans cette ligne, la condition est toujours fausse et load() n'est
