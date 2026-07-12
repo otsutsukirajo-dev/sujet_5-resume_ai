@@ -54,7 +54,7 @@ Le module IA repose sur 3 modèles pré-entraînés (Hugging Face) qui ne sont *
 | `Helsinki-NLP/opus-mt-fr-en` | Traduction FR → EN | ~300 Mo |
 | `Helsinki-NLP/opus-mt-en-fr` | Traduction EN → FR | ~300 Mo |
 
-**Pour éviter tout blocage pendant le test**, lancez d'abord ce script de préchauffage, qui télécharge les 3 modèles une fois pour toutes (le premier résumé sera ensuite instantané, même hors connexion) :
+**Pour éviter tout blocage pendant le test**, lancez d'abord ce script de préchauffage, qui télécharge les 3 modèles une fois pour toutes (le premier résumé sera ensuite instantané) :
 
 ```bash
 cd backend
