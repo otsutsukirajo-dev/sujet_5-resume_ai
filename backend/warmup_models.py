@@ -6,7 +6,7 @@ A lancer UNE FOIS, a l'avance
 Ca telecharge et met en cache les 3 modeles IA (BART + les 2 modeles de
 traduction) SANS avoir besoin de lancer Flask ni de resumer un vrai
 document. Une fois termine, tout est en cache local et le premier resume
-en vrai sera instantane, meme sans connexion internet ce jour-la.
+en vrai sera instantane.
 
 Usage :
     cd backend
